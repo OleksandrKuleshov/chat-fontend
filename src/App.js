@@ -1,24 +1,21 @@
-import logo from './logo.svg';
+import React from 'react'; 
+import ChatApp from './Components/ChatApp'
+import ChatRoom from './Components/ChatRoom'
+import NotFoundPage from './Components/404'
 import './App.css';
+import {BrowserRouter as Router, Route, Switch, Redirect} from 'react-router-dom' 
 
-function App() {
+
+const App = () => {
   return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
-    </div>
+    <Router>
+      <Switch>
+        <Route exact path = "/" component = {ChatApp}/>
+        <Route exact path = "/chatRoom" component = {ChatRoom}/>
+        <Route path = "/404" component = {NotFoundPage}/>
+        <Redirect to = "/404"/>
+      </Switch>
+    </Router>
   );
 }
 
