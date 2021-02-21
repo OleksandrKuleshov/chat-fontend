@@ -4,58 +4,55 @@ import { io } from 'socket.io-client'
 import { useLocation, useHistory } from 'react-router-dom'
 import { Formik, Field } from 'formik';
 
-// var socket = 0
-
+//socket initialization with some parameters
 const socket = io('http://localhost:8080', {
   transports: ["websocket"],
   autoConnect : false,
   reconnection: false
 });
 
-
+//chat room functional component that handles communication with server, chat messages display, users in chat display
 const ChatRoom = () => {
   const location = useLocation();
   const username = location.state.username
   const history = useHistory();
 
+  
   const [users, setUsers] = useState([])
   const [msg, setMsg] = useState([])
 
+  //hook for communication with server
   useEffect(() => {
     socket.connect();
 
-    socket.on('connect', () => {
-      socket.emit("username", username);
-    })
-    socket.on('msg', inc => {
-      console.log("inc: " + JSON.stringify(inc))
-      // setMsg(msg => [...msg, inc]);
-    })
+      socket.on('connect', () => {
+        socket.emit("username", username);
+      })
+      socket.on('msg', inc => {
+        setMsg(msg => [...msg, inc]);
+      })
 
-    socket.on('users', users => {
-      setUsers(users);
-    })
+      socket.on('users', users => {
+        setUsers(users);
+      })
 
-    socket.on('disconnected', msg => {
-      console.log(msg);
-    })
+      socket.on('disconnected', msg => {
+        socket.disconnect();
+        history.push({pathname:'/chatRoom', state :{username : ""}});
+      })
 
-    socket.on('disconnect', () => {
-      alert('Chat server went down');
-      history.push({pathname:'/'})
-    })
-  }, [])
-
-  function testSend() {
-    socket.emit('msg', "test message");
-  }
+      socket.on('disconnect', () => {
+        alert('Chat server went down');
+        socket.disconnect();
+        history.push({pathname:'/chatRoom', state :{username : ""}})
+      })
+  }, [history, username])
 
   function sendMessage(msg) {
     socket.emit('msg', msg);
   }
 
   return(<>
-  <Button onClick={() => testSend()} type='primary' htmlType='submit'>test send</Button>
   <div style={{position:'fixed'}}>
     <List
       size="small"
@@ -70,24 +67,23 @@ const ChatRoom = () => {
         <div id="chat_window" style={{width:'800px'}}>
         <List
           size="small"
-          header={<div>Chat Room</div>}
+          header={<div style = {{fontWeight:'bold'}}>Chat Room</div>}
           bordered
           dataSource={msg}
-          renderItem={item => <List.Item>{item}</List.Item>}          
+          renderItem={item => 
+            <List.Item>{item.sender} : {item.text}</List.Item>}          
         />
         </div>
         <div style ={{  display: 'flex', justifyContent:'center'}}>
           
             <Formik 
               initialValues ={{msg: ""}} 
-              onSubmit={(data, {setSubmitting}) => {
-                setSubmitting(true);
-                //make async call
+              onSubmit={(data,) => {
                 sendMessage(data.msg)
-                setSubmitting(false);
+                data.msg = "";
               }}>
-              {({ values, isSubmitting, handleChange, handleBlur, handleSubmit}) => (
-              <Form style={{}} onFinish={handleSubmit} value={values.msg}>
+              {({ values, handleSubmit}) => (
+              <Form onFinish={handleSubmit} value={values.msg}>
                 <Field style={{width:'735px'}} placeholder="" name="msg" type="input" as={Input}/>
                 <Button type='primary' htmlType='submit'>
                   Send
